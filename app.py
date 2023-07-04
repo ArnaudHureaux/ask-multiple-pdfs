@@ -10,6 +10,7 @@ from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
 from langchain.llms import HuggingFaceHub
 
+
 def get_pdf_text(pdf_docs):
     text = ""
     for pdf in pdf_docs:
@@ -52,30 +53,41 @@ def get_conversation_chain(vectorstore):
 
 
 def handle_userinput(user_question):
-    response = st.session_state.conversation({'question': user_question})
+    context = ' Detail where \
+            from the information, and if you find many possible answer, \
+            specify each of those possible answers and explain their difference & point their sources'
+    question = {'question': user_question+context}
+    response = st.session_state.conversation(question)
     st.session_state.chat_history = response['chat_history']
 
-    for i, message in enumerate(st.session_state.chat_history):
+    for i, message in enumerate(reversed(st.session_state.chat_history)):
         if i % 2 == 0:
-            st.write(user_template.replace(
+            st.write(bot_template.replace(
                 "{{MSG}}", message.content), unsafe_allow_html=True)
         else:
-            st.write(bot_template.replace(
+            st.write(user_template.replace(
                 "{{MSG}}", message.content), unsafe_allow_html=True)
 
 
 def main():
     load_dotenv()
-    st.set_page_config(page_title="Chat with multiple PDFs",
-                       page_icon=":books:")
+    st.set_page_config(page_title="ConsulSearch",
+                       page_icon="https://storage.cloud.google.com/large-language-models-ah/webui/CONSUL_CODE-logo.png")
     st.write(css, unsafe_allow_html=True)
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = None
-
-    st.header("Chat with multiple PDFs :books:")
+    header = """
+            <div style="display: flex; align-items: center;">
+                <img src='https://storage.cloud.google.com/large-language-models-ah/webui/CONSUL_CODE-logo.png' alt="Image" style="height: 40px;">
+                <h1 style="font-size: 32px; margin-left: 10px;">ConsulSearch</h1>
+            </div>
+            """
+    # Render the Markdown string as HTML using the st.markdown function
+    st.markdown(header, unsafe_allow_html=True)
+    #st.header("ConsulSearch : Chat with multiple PDFs")
     user_question = st.text_input("Ask a question about your documents:")
     if user_question:
         handle_userinput(user_question)
